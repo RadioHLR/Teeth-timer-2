@@ -167,7 +167,6 @@
 
         // --- State Variables ---
         let timerInterval = null;
-        // Start state should be 'running' for automatic start, so isPaused is false initially
         let isPaused = false; 
         let totalTimeLeft = TOTAL_DURATION;
         let quadrantIndex = 0;
@@ -347,13 +346,13 @@
         }
 
         /**
-         * Resets the timer to its initial state.
+         * Resets the timer to its initial state and restarts it automatically.
          */
         function resetTimer() {
             clearInterval(timerInterval);
             timerInterval = null;
-            // Set state to paused, but we re-start immediately in window.onload, so keep it consistent:
-            isPaused = true; 
+            
+            // Reset state variables
             totalTimeLeft = TOTAL_DURATION;
             quadrantIndex = 0;
             quadrantTimeLeft = QUADRANT_DURATION;
@@ -369,25 +368,26 @@
                 visual.classList.remove('active-quadrant');
             }
             
-            updateDisplay();
-            
-            // Re-start the timer after reset (since the user requested automatic start)
-            if (timerInterval === null && totalTimeLeft > 0) {
-                 isPaused = false;
-                 tick(); 
-                 timerInterval = setInterval(tick, 1000);
-            }
+            // Restart the app immediately
+            initializeApp();
         }
 
-        // Initialize the app display and start the timer when the page loads
-        window.onload = function() {
-            // 1. Set initial state to 'running' (isPaused = false) for automatic visual start
-            isPaused = false;
+        /**
+         * Initializes the timer state and starts the countdown automatically.
+         */
+        function initializeApp() {
+            isPaused = false; 
+            updateDisplay(); // Initial display refresh
             
-            // 2. Start the timer interval directly (Automatic Start)
-            tick(); 
-            timerInterval = setInterval(tick, 1000);
-        };
+            if (timerInterval === null && totalTimeLeft > 0) {
+                // Call tick() immediately to start the countdown and update display
+                tick(); 
+                timerInterval = setInterval(tick, 1000);
+            }
+        }
+        
+        // Start the application immediately after the script loads
+        initializeApp();
 
     </script>
 </body>
