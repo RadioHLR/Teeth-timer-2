@@ -161,37 +161,22 @@
         let quadrantTimeLeft = QUADRANT_DURATION;
         const totalInitialProgress = TOTAL_DURATION;
 
-        // --- DOM Elements ---
-        let totalTimeDisplay;
-        let totalProgressBar;
-        let currentQuadrantNameDisplay;
-        let quadrantTimeDisplay;
-        let quadrantProgressBar;
-        let startPauseButton;
-        let completionMessage;
-        let mainApp;
+        // --- DOM Elements (Initialized directly as script is at body end) ---
+        const totalTimeDisplay = document.getElementById('total-time-display');
+        const totalProgressBar = document.getElementById('total-progress-bar');
+        const currentQuadrantNameDisplay = document.getElementById('current-quadrant-name');
+        const quadrantTimeDisplay = document.getElementById('quadrant-time-display');
+        const quadrantProgressBar = document.getElementById('quadrant-progress-bar'); 
+        const startPauseButton = document.getElementById('start-pause-button');
+        const completionMessage = document.getElementById('completion-message');
 
         // Quadrant Visual Elements (Q0 to Q3)
-        const quadrantVisuals = [];
-        
-        /**
-         * Initializes DOM element references. This must be called after the DOM is fully loaded.
-         */
-        function setupDOMElements() {
-             totalTimeDisplay = document.getElementById('total-time-display');
-             totalProgressBar = document.getElementById('total-progress-bar');
-             currentQuadrantNameDisplay = document.getElementById('current-quadrant-name');
-             quadrantTimeDisplay = document.getElementById('quadrant-time-display');
-             quadrantProgressBar = document.getElementById('quadrant-progress-bar'); 
-             startPauseButton = document.getElementById('start-pause-button');
-             completionMessage = document.getElementById('completion-message');
-             mainApp = document.getElementById('app');
-
-             for (let i = 0; i < QUADRANTS.length; i++) {
-                 quadrantVisuals.push(document.getElementById(`q-${i}`));
-             }
-        }
-
+        const quadrantVisuals = [
+            document.getElementById('q-0'),
+            document.getElementById('q-1'),
+            document.getElementById('q-2'),
+            document.getElementById('q-3')
+        ];
 
         // --- Timer Functions ---
 
@@ -208,9 +193,6 @@
          * Updates the display elements based on the current state.
          */
         function updateDisplay() {
-            // Check if DOM elements are ready before accessing properties
-            if (!totalTimeDisplay) return; 
-
             // Calculate current quadrant time, ensuring it is never negative for display purposes
             const currentQTime = Math.max(0, quadrantTimeLeft);
             const quadrantPercent = (currentQTime / QUADRANT_DURATION) * 100;
@@ -223,11 +205,9 @@
             // 2. Quadrant Progress Bar 
             quadrantProgressBar.style.width = `${quadrantPercent}%`; 
 
-            // 3. Quadrant Visuals and Name (Defensive check for index validity)
-            for (let i = 0; i < QUADRANTS.length; i++) {
-                if(quadrantVisuals[i]) { // Safety check
-                    quadrantVisuals[i].classList.remove('active-quadrant');
-                }
+            // 3. Quadrant Visuals and Name 
+            for (const visual of quadrantVisuals) {
+                visual.classList.remove('active-quadrant');
             }
             
             if (totalTimeLeft > 0) {
@@ -235,7 +215,7 @@
                 if (quadrantIndex < QUADRANTS.length) {
                     
                     // Active quadrant phase (index 0, 1, 2, or 3)
-                    if (!isPaused && quadrantVisuals[quadrantIndex]) {
+                    if (!isPaused) {
                         quadrantVisuals[quadrantIndex].classList.add('active-quadrant');
                     }
                     
@@ -296,7 +276,7 @@
                 
                 // Final update for visuals and completion message
                 for (const visual of quadrantVisuals) {
-                    if(visual) visual.classList.remove('active-quadrant');
+                    visual.classList.remove('active-quadrant');
                 }
                 
                 completionMessage.classList.remove('hidden');
@@ -360,7 +340,7 @@
         /**
          * Resets the timer to its initial state and sets it to be running automatically.
          */
-        function resetTimer() {
+        window.resetTimer = function() { // Make function global for onclick attribute
             clearInterval(timerInterval);
             timerInterval = null;
             
@@ -373,7 +353,7 @@
             
             // Clear visual highlight
             for (const visual of quadrantVisuals) {
-                if(visual) visual.classList.remove('active-quadrant');
+                visual.classList.remove('active-quadrant');
             }
             
             initializeApp(); // Re-initialize display state and auto-start
@@ -383,15 +363,12 @@
          * Initializes the app display state on load and automatically starts the timer.
          */
         function initializeApp() {
-            // 1. Setup DOM elements (must run first)
-            setupDOMElements();
-            
-            // 2. Set initial quadrant time display
+            // 1. Set initial quadrant time display
             quadrantTimeDisplay.textContent = `${QUADRANT_DURATION}s`; 
             currentQuadrantNameDisplay.textContent = "Ready to Brush";
             currentQuadrantNameDisplay.classList.remove('text-xl', 'sm:text-2xl');
             
-            // 3. Auto-start logic on load/reset
+            // 2. Auto-start logic on load/reset
             // If it's not paused and the interval isn't running yet (initial load or after reset)
             if (timerInterval === null && totalTimeLeft > 0 && !isPaused) { 
                  // Call tick() immediately to start the countdown and update display
@@ -399,12 +376,15 @@
                  timerInterval = setInterval(tick, 1000);
             }
             
-            // 4. Update display
+            // 3. Update display
             updateDisplay(); 
         }
 
-        // Global start point: Wait for the DOM to be fully loaded before running the app initialization
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        // Make toggleTimer globally accessible
+        window.toggleTimer = toggleTimer; 
+        
+        // Global start point: Initialize the app immediately, relying on script position at the end of body
+        initializeApp();
 
     </script>
 </body>
