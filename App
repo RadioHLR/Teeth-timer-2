@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -161,20 +162,36 @@
         const totalInitialProgress = TOTAL_DURATION;
 
         // --- DOM Elements ---
-        const totalTimeDisplay = document.getElementById('total-time-display');
-        const totalProgressBar = document.getElementById('total-progress-bar');
-        const currentQuadrantNameDisplay = document.getElementById('current-quadrant-name');
-        const quadrantTimeDisplay = document.getElementById('quadrant-time-display');
-        const quadrantProgressBar = document.getElementById('quadrant-progress-bar'); 
-        const startPauseButton = document.getElementById('start-pause-button');
-        const completionMessage = document.getElementById('completion-message');
-        const mainApp = document.getElementById('app');
+        let totalTimeDisplay;
+        let totalProgressBar;
+        let currentQuadrantNameDisplay;
+        let quadrantTimeDisplay;
+        let quadrantProgressBar;
+        let startPauseButton;
+        let completionMessage;
+        let mainApp;
 
         // Quadrant Visual Elements (Q0 to Q3)
         const quadrantVisuals = [];
-        for (let i = 0; i < QUADRANTS.length; i++) {
-            quadrantVisuals.push(document.getElementById(`q-${i}`));
+        
+        /**
+         * Initializes DOM element references. This must be called after the DOM is fully loaded.
+         */
+        function setupDOMElements() {
+             totalTimeDisplay = document.getElementById('total-time-display');
+             totalProgressBar = document.getElementById('total-progress-bar');
+             currentQuadrantNameDisplay = document.getElementById('current-quadrant-name');
+             quadrantTimeDisplay = document.getElementById('quadrant-time-display');
+             quadrantProgressBar = document.getElementById('quadrant-progress-bar'); 
+             startPauseButton = document.getElementById('start-pause-button');
+             completionMessage = document.getElementById('completion-message');
+             mainApp = document.getElementById('app');
+
+             for (let i = 0; i < QUADRANTS.length; i++) {
+                 quadrantVisuals.push(document.getElementById(`q-${i}`));
+             }
         }
+
 
         // --- Timer Functions ---
 
@@ -191,6 +208,9 @@
          * Updates the display elements based on the current state.
          */
         function updateDisplay() {
+            // Check if DOM elements are ready before accessing properties
+            if (!totalTimeDisplay) return; 
+
             // Calculate current quadrant time, ensuring it is never negative for display purposes
             const currentQTime = Math.max(0, quadrantTimeLeft);
             const quadrantPercent = (currentQTime / QUADRANT_DURATION) * 100;
@@ -205,7 +225,9 @@
 
             // 3. Quadrant Visuals and Name (Defensive check for index validity)
             for (let i = 0; i < QUADRANTS.length; i++) {
-                quadrantVisuals[i].classList.remove('active-quadrant');
+                if(quadrantVisuals[i]) { // Safety check
+                    quadrantVisuals[i].classList.remove('active-quadrant');
+                }
             }
             
             if (totalTimeLeft > 0) {
@@ -213,7 +235,7 @@
                 if (quadrantIndex < QUADRANTS.length) {
                     
                     // Active quadrant phase (index 0, 1, 2, or 3)
-                    if (!isPaused) {
+                    if (!isPaused && quadrantVisuals[quadrantIndex]) {
                         quadrantVisuals[quadrantIndex].classList.add('active-quadrant');
                     }
                     
@@ -274,7 +296,7 @@
                 
                 // Final update for visuals and completion message
                 for (const visual of quadrantVisuals) {
-                    visual.classList.remove('active-quadrant');
+                    if(visual) visual.classList.remove('active-quadrant');
                 }
                 
                 completionMessage.classList.remove('hidden');
@@ -351,7 +373,7 @@
             
             // Clear visual highlight
             for (const visual of quadrantVisuals) {
-                visual.classList.remove('active-quadrant');
+                if(visual) visual.classList.remove('active-quadrant');
             }
             
             initializeApp(); // Re-initialize display state and auto-start
@@ -361,12 +383,15 @@
          * Initializes the app display state on load and automatically starts the timer.
          */
         function initializeApp() {
-            // Set initial quadrant time display
+            // 1. Setup DOM elements (must run first)
+            setupDOMElements();
+            
+            // 2. Set initial quadrant time display
             quadrantTimeDisplay.textContent = `${QUADRANT_DURATION}s`; 
             currentQuadrantNameDisplay.textContent = "Ready to Brush";
             currentQuadrantNameDisplay.classList.remove('text-xl', 'sm:text-2xl');
             
-            // --- Auto-start logic on load/reset ---
+            // 3. Auto-start logic on load/reset
             // If it's not paused and the interval isn't running yet (initial load or after reset)
             if (timerInterval === null && totalTimeLeft > 0 && !isPaused) { 
                  // Call tick() immediately to start the countdown and update display
@@ -374,12 +399,13 @@
                  timerInterval = setInterval(tick, 1000);
             }
             
+            // 4. Update display
             updateDisplay(); 
         }
 
-        // Global start point: Initialize the app immediately
-        initializeApp();
+        // Global start point: Wait for the DOM to be fully loaded before running the app initialization
+        document.addEventListener('DOMContentLoaded', initializeApp);
 
     </script>
 </body>
-</html> 
+</html>
